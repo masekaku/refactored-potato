@@ -55,7 +55,6 @@ button:hover {
   font-family: monospace;
   white-space: pre-wrap;
   min-height: 100px;
-  margin-top: 0.5rem;
 }
 #copyBtn {
   margin-top: 0.75rem;
