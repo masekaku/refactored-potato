@@ -1,35 +1,28 @@
-import { useState } from 'react'
+import { useState } from 'react';
 
 export default function Home() {
-  const [inputUrl, setInputUrl] = useState('')
-  const [result, setResult] = useState('')
+  const [input, setInput] = useState('');
+  const [result, setResult] = useState('');
 
-  const generateLink = async () => {
+  async function generate() {
     const res = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ original_url: inputUrl })
-    })
-    const data = await res.json()
-    setResult(data.short_url)
+      body: JSON.stringify({ url: input }),
+    });
+
+    if (!res.ok) return alert('Gagal membuat link');
+
+    const data = await res.json();
+    setResult(`${process.env.NEXT_PUBLIC_SITE_URL}/redirect?slug=${data.slug}`);
   }
 
   return (
-    <main style={{ padding: 20 }}>
+    <main>
       <h1>Safelink Generator</h1>
-      <input
-        type="text"
-        placeholder="Enter original URL"
-        value={inputUrl}
-        onChange={(e) => setInputUrl(e.target.value)}
-        style={{ width: '100%', marginBottom: 10 }}
-      />
-      <button onClick={generateLink}>Generate Link</button>
-      {result && (
-        <p>
-          Short Link: <a href={result}>{result}</a>
-        </p>
-      )}
+      <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Paste link here" />
+      <button onClick={generate}>Generate</button>
+      {result && <p>🔗 <a href={result} target="_blank">{result}</a></p>}
     </main>
-  )
+  );
 }
