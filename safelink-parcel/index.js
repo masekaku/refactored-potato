@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import ReactDOM from "react-dom";
+import ReactDOM from "react-dom/client";
 import CryptoJS from "crypto-js";
+import "./style.css"; // ✅ Wajib agar styling terikut di build
 
 const SECRET_KEY = "mySecretKey12345";
 
