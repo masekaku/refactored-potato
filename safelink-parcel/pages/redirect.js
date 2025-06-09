@@ -1,28 +1,30 @@
-import { useEffect } from 'react'
-import { useRouter } from 'next/router'
+import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 
-export default function RedirectPage() {
-  const router = useRouter()
-  const { token } = router.query
+export default function Redirect() {
+  const router = useRouter();
 
   useEffect(() => {
-    if (token) {
-      fetch(`/api/redirect?token=${token}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.url) {
-            setTimeout(() => {
-              window.location.href = data.url
-            }, 3000) // Delay 3 detik
-          }
-        })
-    }
-  }, [token])
+    if (!router.isReady) return;
+
+    const { slug } = router.query;
+    if (!slug) return;
+
+    fetch(`/api/resolve?slug=${slug}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data?.url) {
+          setTimeout(() => {
+            window.location.href = data.url;
+          }, 3000); // delay 3 detik
+        }
+      });
+  }, [router]);
 
   return (
-    <main style={{ padding: 20 }}>
-      <h1>Redirecting...</h1>
-      <p>Please wait, you will be redirected shortly.</p>
+    <main>
+      <h2>Redirecting you to destination...</h2>
+      <p>Mohon tunggu sebentar...</p>
     </main>
-  )
+  );
 }
