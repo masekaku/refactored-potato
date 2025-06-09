@@ -1,49 +1,28 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+import { useEffect } from 'react'
+import { useRouter } from 'next/router'
 
-export default function Redirect() {
-  const router = useRouter();
-  const { code } = router.query;
-  const [message, setMessage] = useState('Redirecting...');
-  const [error, setError] = useState('');
+export default function RedirectPage() {
+  const router = useRouter()
+  const { token } = router.query
 
   useEffect(() => {
-    if (!code) return;
-
-    async function fetchRedirect() {
-      try {
-        const res = await fetch(`/api/redirect?code=${code}`);
-        if (res.redirected) {
-          window.location.href = res.url;
-          return;
-        }
-        if (!res.ok) {
-          const data = await res.json();
-          setError(data.message || 'Link not found');
-          setMessage('');
-        }
-      } catch (e) {
-        setError('Failed to redirect');
-        setMessage('');
-      }
+    if (token) {
+      fetch(`/api/redirect?token=${token}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.url) {
+            setTimeout(() => {
+              window.location.href = data.url
+            }, 3000) // Delay 3 detik
+          }
+        })
     }
-
-    fetchRedirect();
-  }, [code]);
+  }, [token])
 
   return (
-    <>
-      <link rel="stylesheet" href="/style.css" />
-      <main>
-        <h1>Redirecting...</h1>
-        {message && <p>{message}</p>}
-        {error && (
-          <>
-            <p className="error">{error}</p>
-            <p>If redirection failed, <a href={`/api/redirect?code=${code}`}>click here</a></p>
-          </>
-        )}
-      </main>
-    </>
-  );
+    <main style={{ padding: 20 }}>
+      <h1>Redirecting...</h1>
+      <p>Please wait, you will be redirected shortly.</p>
+    </main>
+  )
 }
