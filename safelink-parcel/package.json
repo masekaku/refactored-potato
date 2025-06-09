@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "SafeLink Generator using React + Parcel",
   "scripts": {
-    "start": "parcel index.html --port 3000",
-    "build": "parcel build index.html --dist-dir build"
-  },
+  "start": "parcel index.html",
+  "build": "parcel build index.html --dist-dir dist"
+},
   "dependencies": {
     "crypto-js": "^4.1.1",
     "react": "^18.2.0",
