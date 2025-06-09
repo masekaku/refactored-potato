@@ -1,64 +1,57 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import CryptoJS from "crypto-js";
-import "./style.css";
 
-const SECRET_KEY = "YourSecretKey123!"; // Ganti dengan key amanmu
+const SECRET_KEY = "mySecretKey12345";
 
-function encryptAES(text) {
-  return CryptoJS.AES.encrypt(text, SECRET_KEY).toString();
+function encryptUrl(url) {
+  return CryptoJS.AES.encrypt(url, SECRET_KEY).toString();
 }
 
-function generateSafeLink(encrypted) {
-  // Ganti domain safelinkmu sesuai kebutuhan
-  return `https://your-safelink-domain.com/redirect.html?data=${encodeURIComponent(encrypted)}`;
-}
-
-function App() {
+function SafeLinkGenerator() {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
 
-  const handleGenerate = () => {
+  function handleGenerate() {
     setError("");
-    const links = input
-      .split("\n")
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0);
-
-    if (links.length === 0) {
-      setError("Please enter at least one link.");
-      setOutput("");
+    if (!input.trim()) {
+      setError("Please enter at least one URL.");
       return;
     }
-    if (links.length > 100) {
-      setError("Maximum 100 links allowed.");
-      setOutput("");
+
+    const urls = input.trim().split(/\r?\n/).filter(Boolean);
+    if (urls.length > 100) {
+      setError("Maximum 100 URLs allowed.");
       return;
     }
 
     try {
-      const encryptedLinks = links.map((link) => {
-        const encrypted = encryptAES(link);
-        return generateSafeLink(encrypted);
+      const encryptedUrls = urls.map((url) => {
+        // Basic URL validation
+        try {
+          new URL(url);
+        } catch {
+          throw new Error(`Invalid URL detected: ${url}`);
+        }
+        return encryptUrl(url);
       });
-      setOutput(encryptedLinks.join("\n"));
-    } catch (e) {
-      setError("Encryption error. Please try again.");
-      setOutput("");
-    }
-  };
 
-  const handleCopy = () => {
-    if (!output) return;
-    navigator.clipboard.writeText(output).then(() => {
-      alert("Copied to clipboard!");
-    });
-  };
+      // Generate safelinks (for demo: just show encrypted strings)
+      setOutput(encryptedUrls.join("\n"));
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  function handleCopy() {
+    navigator.clipboard.writeText(output);
+    alert("Encrypted URLs copied to clipboard!");
+  }
 
   return (
     <>
-      <h1>Safelink Generator</h1>
+      <h1>SafeLink Generator</h1>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -66,22 +59,23 @@ function App() {
         }}
       >
         <textarea
-          placeholder="Enter your URLs here, one per line (max 100)..."
+          placeholder="Enter URLs (one per line, max 100)"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          spellCheck="false"
-        />
-        <button type="submit">Generate Safelink(s)</button>
+        ></textarea>
+        <button type="submit">Generate Encrypted URLs</button>
       </form>
       {error && <div className="error">{error}</div>}
-      <pre id="output">{output}</pre>
       {output && (
-        <button id="copyBtn" onClick={handleCopy}>
-          Copy All Links
-        </button>
+        <>
+          <div id="output">{output}</div>
+          <button id="copyBtn" onClick={handleCopy}>
+            Copy to Clipboard
+          </button>
+        </>
       )}
     </>
   );
 }
 
-ReactDOM.render(<App />, document.getElementById("root"));
+ReactDOM.render(<SafeLinkGenerator />, document.getElementById("root"));
