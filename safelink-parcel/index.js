@@ -1,64 +1,69 @@
 import React, { useState } from "react";
-import ReactDOM from "react-dom/client";
-import CryptoJS from "crypto-js";
-import "./style.css"; // ✅ Wajib agar styling terikut di build
+import ReactDOM from "react-dom";
 
 function App() {
-  const [input, setInput] = useState("");
-  const [output, setOutput] = useState("");
+  const [inputUrl, setInputUrl] = useState("");
+  const [generatedCode, setGeneratedCode] = useState("");
   const [error, setError] = useState("");
 
-  const handleEncrypt = (e) => {
+  // Generate kode unik sederhana dari URL (contoh pakai hashing sederhana)
+  function generateCode(url) {
+    // Simple hash: convert char codes sum to hex string
+    let hash = 0;
+    for (let i = 0; i < url.length; i++) {
+      hash = (hash + url.charCodeAt(i) * (i + 1)) % 1000000;
+    }
+    return hash.toString(16).padStart(5, "0").toUpperCase();
+  }
+
+  function handleSubmit(e) {
     e.preventDefault();
     setError("");
-
-    if (!input.trim()) {
-      setError("Input tidak boleh kosong.");
+    if (!inputUrl.trim()) {
+      setError("Please enter a valid URL");
       return;
     }
-
     try {
-      const encrypted = CryptoJS.AES.encrypt(input, "safelinkKey").toString();
-      const base64 = btoa(encrypted);
-      const currentUrl = window.location.origin;
-      const resultUrl = `${currentUrl}/#/${base64}`;
-      setOutput(resultUrl);
-    } catch (err) {
-      setError("Terjadi kesalahan saat mengenkripsi.");
+      new URL(inputUrl); // Validasi URL
+    } catch {
+      setError("Invalid URL format");
+      return;
     }
-  };
+    const code = generateCode(inputUrl);
+    // Simpan ke localStorage (kode -> url), nanti redirect baca dari sini
+    let safelinks = JSON.parse(localStorage.getItem("safelinks") || "{}");
+    safelinks[code] = inputUrl;
+    localStorage.setItem("safelinks", JSON.stringify(safelinks));
+    setGeneratedCode(code);
+  }
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(output).then(() => {
-      alert("Link berhasil disalin!");
-    });
-  };
+  function handleCopy() {
+    if (!generatedCode) return;
+    navigator.clipboard.writeText(`${window.location.origin}/redirect.html?code=${generatedCode}`);
+    alert("Safelink copied!");
+  }
 
   return (
     <div>
-      <h1>SafeLink Generator</h1>
-      <form onSubmit={handleEncrypt}>
+      <h1>Safelink Generator</h1>
+      <form onSubmit={handleSubmit}>
         <textarea
-          placeholder="Tempelkan URL target di sini..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-        ></textarea>
-        <button type="submit">Generate SafeLink</button>
-        {error && <div className="error">{error}</div>}
+          placeholder="Paste your original URL here..."
+          value={inputUrl}
+          onChange={(e) => setInputUrl(e.target.value)}
+        />
+        <button type="submit">Generate Safelink</button>
       </form>
-
-      {output && (
-        <>
-          <div id="output">{output}</div>
-          <button id="copyBtn" onClick={handleCopy}>
-            Salin Link
-          </button>
-        </>
+      {error && <p className="error">{error}</p>}
+      {generatedCode && (
+        <div id="output">
+          <p>Here is your safelink:</p>
+          <code>{`${window.location.origin}/redirect.html?code=${generatedCode}`}</code>
+          <button id="copyBtn" onClick={handleCopy}>Copy Safelink</button>
+        </div>
       )}
     </div>
   );
 }
 
-// Gunakan root modern (React 18+)
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App />);
+ReactDOM.render(<App />, document.getElementById("root"));
