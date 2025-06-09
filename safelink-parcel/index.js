@@ -3,80 +3,62 @@ import ReactDOM from "react-dom/client";
 import CryptoJS from "crypto-js";
 import "./style.css"; // ✅ Wajib agar styling terikut di build
 
-const SECRET_KEY = "mySecretKey12345";
-
-function encryptUrl(url) {
-  return CryptoJS.AES.encrypt(url, SECRET_KEY).toString();
-}
-
-function SafeLinkGenerator() {
+function App() {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
 
-  function handleGenerate() {
+  const handleEncrypt = (e) => {
+    e.preventDefault();
     setError("");
-    if (!input.trim()) {
-      setError("Please enter at least one URL.");
-      return;
-    }
 
-    const urls = input.trim().split(/\r?\n/).filter(Boolean);
-    if (urls.length > 100) {
-      setError("Maximum 100 URLs allowed.");
+    if (!input.trim()) {
+      setError("Input tidak boleh kosong.");
       return;
     }
 
     try {
-      const encryptedUrls = urls.map((url) => {
-        // Basic URL validation
-        try {
-          new URL(url);
-        } catch {
-          throw new Error(`Invalid URL detected: ${url}`);
-        }
-        return encryptUrl(url);
-      });
-
-      // Generate safelinks (for demo: just show encrypted strings)
-      setOutput(encryptedUrls.join("\n"));
-    } catch (e) {
-      setError(e.message);
+      const encrypted = CryptoJS.AES.encrypt(input, "safelinkKey").toString();
+      const base64 = btoa(encrypted);
+      const currentUrl = window.location.origin;
+      const resultUrl = `${currentUrl}/#/${base64}`;
+      setOutput(resultUrl);
+    } catch (err) {
+      setError("Terjadi kesalahan saat mengenkripsi.");
     }
-  }
+  };
 
-  function handleCopy() {
-    navigator.clipboard.writeText(output);
-    alert("Encrypted URLs copied to clipboard!");
-  }
+  const handleCopy = () => {
+    navigator.clipboard.writeText(output).then(() => {
+      alert("Link berhasil disalin!");
+    });
+  };
 
   return (
-    <>
+    <div>
       <h1>SafeLink Generator</h1>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleGenerate();
-        }}
-      >
+      <form onSubmit={handleEncrypt}>
         <textarea
-          placeholder="Enter URLs (one per line, max 100)"
+          placeholder="Tempelkan URL target di sini..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
         ></textarea>
-        <button type="submit">Generate Encrypted URLs</button>
+        <button type="submit">Generate SafeLink</button>
+        {error && <div className="error">{error}</div>}
       </form>
-      {error && <div className="error">{error}</div>}
+
       {output && (
         <>
           <div id="output">{output}</div>
           <button id="copyBtn" onClick={handleCopy}>
-            Copy to Clipboard
+            Salin Link
           </button>
         </>
       )}
-    </>
+    </div>
   );
 }
 
-ReactDOM.render(<SafeLinkGenerator />, document.getElementById("root"));
+// Gunakan root modern (React 18+)
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
