@@ -1,61 +1,35 @@
-import { useState } from 'react';
+import { useState } from 'react'
 
 export default function Home() {
-  const [url, setUrl] = useState('');
-  const [result, setResult] = useState('');
-  const [error, setError] = useState('');
+  const [inputUrl, setInputUrl] = useState('')
+  const [result, setResult] = useState('')
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError('');
-    setResult('');
-
-    if (!url) {
-      setError('Please enter a URL');
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || 'Something went wrong');
-        return;
-      }
-
-      setResult(`${window.location.origin}/redirect?code=${data.shortCode}`);
-    } catch (err) {
-      setError(err.message || 'Something went wrong');
-    }
+  const generateLink = async () => {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ original_url: inputUrl })
+    })
+    const data = await res.json()
+    setResult(data.short_url)
   }
 
   return (
-    <>
-      <link rel="stylesheet" href="/style.css" />
-      <main>
-        <h1>SafeLink URL Shortener</h1>
-        <form onSubmit={handleSubmit}>
-          <textarea
-            placeholder="Enter your URL here..."
-            value={url}
-            onChange={e => setUrl(e.target.value)}
-          />
-          <button type="submit">Generate SafeLink</button>
-        </form>
-        {error && <p className="error">{error}</p>}
-        {result && (
-          <>
-            <p>Here is your shortened URL:</p>
-            <pre>{result}</pre>
-          </>
-        )}
-      </main>
-    </>
-  );
+    <main style={{ padding: 20 }}>
+      <h1>Safelink Generator</h1>
+      <input
+        type="text"
+        placeholder="Enter original URL"
+        value={inputUrl}
+        onChange={(e) => setInputUrl(e.target.value)}
+        style={{ width: '100%', marginBottom: 10 }}
+      />
+      <button onClick={generateLink}>Generate Link</button>
+      {result && (
+        <p>
+          Short Link: <a href={result}>{result}</a>
+        </p>
+      )}
+    </main>
+  )
 }
