@@ -1,42 +1,18 @@
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient'
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
+  if (req.method !== 'POST') return res.status(405).end()
 
-  const { url } = req.body;
+  const { original_url } = req.body
+  const token = Math.random().toString(36).substr(2, 8)
 
-  if (!url) {
-    return res.status(400).json({ message: 'URL is required' });
-  }
+  const { error } = await supabase
+    .from('links')
+    .insert([{ token, original_url }])
 
-  try {
-    // Insert URL and generate short code
-    const { data: existing } = await supabase
-      .from('links')
-      .select('*')
-      .eq('url', url)
-      .limit(1)
-      .single();
+  if (error) return res.status(500).json({ error: error.message })
 
-    if (existing) {
-      return res.status(200).json({ shortCode: existing.short_code });
-    }
-
-    // Generate a short code (6 characters)
-    const shortCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-
-    const { error } = await supabase.from('links').insert({
-      url,
-      short_code: shortCode,
-      created_at: new Date().toISOString(),
-    });
-
-    if (error) throw error;
-
-    return res.status(200).json({ shortCode });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
-  }
+  res.status(200).json({
+    short_url: `${process.env.NEXT_PUBLIC_SITE_URL}/redirect?token=${token}`
+  })
 }
